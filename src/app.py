@@ -14,6 +14,25 @@ st.set_page_config(
     layout="centered",
 )
 
+
+def parse_filename(content_disposition: str) -> str:
+    if not content_disposition:
+        return "report.xlsx"
+    parts = [part.strip() for part in content_disposition.split(";")]
+    for part in parts:
+        if part.lower().startswith("filename="):
+            filename = part.split("=", 1)[1].strip('"')
+            return filename
+    return "report.xlsx"
+
+
+def is_file_response(content_type: str, content_disposition: str) -> bool:
+    if content_disposition:
+        return True
+    return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" in content_type or (
+        "application" in content_type and "json" not in content_type and "text" not in content_type
+    )
+
 st.markdown(
     """
     <style>
@@ -73,6 +92,8 @@ st.markdown(
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
+if "download_data" not in st.session_state:
+    st.session_state.download_data = None
 
 with st.container(border=True):
     st.markdown('<div class="chat-card-marker"></div>', unsafe_allow_html=True)
@@ -86,6 +107,7 @@ with st.container(border=True):
 
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
+    st.session_state.download_data = None
 
     if not N8N_WEBHOOK_URL:
         reply = "⚠️ N8N_WEBHOOK_URL tanımlı değil. Lütfen .env dosyasına webhook adresini ekleyin."
@@ -100,8 +122,14 @@ if prompt:
             content_type = response.headers.get("Content-Type", "")
             content_disposition = response.headers.get("Content-Disposition", "")
 
-            if content_disposition or ("application" in content_type and "json" not in content_type):
-                reply = "✅ N8N yanıtı alındı. Dosya indirme içeriği Streamlit'te gösterilmeyecek."
+            if is_file_response(content_type, content_disposition):
+                filename = parse_filename(content_disposition)
+                st.session_state.download_data = {
+                    "content": response.content,
+                    "filename": filename,
+                    "mime": content_type or "application/octet-stream",
+                }
+                reply = f"✅ XLSX dosyası hazır. Aşağıdaki butonla indir: {filename}"
             else:
                 try:
                     data = response.json()
@@ -117,9 +145,17 @@ if prompt:
                         reply = str(data)
                 except ValueError:
                     text = response.text.strip()
-                    reply = text or "✅ N8N isteği başarıyla işlendi. Dosya içeriği Streamlit'te gösterilmeyecek."
+                    reply = text or "✅ N8N isteği başarıyla işlendi."
         except requests.RequestException as exc:
             reply = f"❌ Webhook'a ulaşılamadı: {exc}"
 
     st.session_state.messages.append({"role": "assistant", "content": reply})
     st.rerun()
+
+if st.session_state.download_data:
+    st.download_button(
+        label="XLSX dosyasını indir",
+        data=st.session_state.download_data["content"],
+        file_name=st.session_state.download_data["filename"],
+        mime=st.session_state.download_data["mime"],
+    )
