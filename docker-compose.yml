@@ -9,8 +9,8 @@ services:
 
     restart: unless-stopped
 
-    ports:
-      - 8501
+    expose:
+      - "8501"
 
     networks:
       - dokploy-network
@@ -19,13 +19,6 @@ services:
       N8N_WEBHOOK_URL: "${N8N_WEBHOOK_URL:-}"
       STREAMLIT_SERVER_HEADLESS: "true"
       STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"
-
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.google-maps-n8n.rule=Host(`businessdatafinder.dokploy.com`)
-      - traefik.http.routers.google-maps-n8n.entrypoints=websecure
-      - traefik.http.routers.google-maps-n8n.tls.certresolver=letsencrypt
-      - traefik.http.services.google-maps-n8n.loadbalancer.server.port=8501
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=5)"]
