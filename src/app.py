@@ -97,20 +97,27 @@ if prompt:
                 timeout=120,
             )
             response.raise_for_status()
-            try:
-                data = response.json()
-                if isinstance(data, dict):
-                    reply = data.get("reply") or data.get("output") or data.get("message") or str(data)
-                elif isinstance(data, list) and data:
-                    first = data[0]
-                    if isinstance(first, dict):
-                        reply = first.get("reply") or first.get("output") or first.get("message") or str(first)
+            content_type = response.headers.get("Content-Type", "")
+            content_disposition = response.headers.get("Content-Disposition", "")
+
+            if content_disposition or ("application" in content_type and "json" not in content_type):
+                reply = "✅ N8N yanıtı alındı. Dosya indirme içeriği Streamlit'te gösterilmeyecek."
+            else:
+                try:
+                    data = response.json()
+                    if isinstance(data, dict):
+                        reply = data.get("reply") or data.get("output") or data.get("message") or str(data)
+                    elif isinstance(data, list) and data:
+                        first = data[0]
+                        if isinstance(first, dict):
+                            reply = first.get("reply") or first.get("output") or first.get("message") or str(first)
+                        else:
+                            reply = str(first)
                     else:
-                        reply = str(first)
-                else:
-                    reply = str(data)
-            except ValueError:
-                reply = response.text or "✅ İstek gönderildi."
+                        reply = str(data)
+                except ValueError:
+                    text = response.text.strip()
+                    reply = text or "✅ N8N isteği başarıyla işlendi. Dosya içeriği Streamlit'te gösterilmeyecek."
         except requests.RequestException as exc:
             reply = f"❌ Webhook'a ulaşılamadı: {exc}"
 
