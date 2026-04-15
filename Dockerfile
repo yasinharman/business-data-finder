@@ -4,8 +4,8 @@ WORKDIR /code
 
 COPY ./requirements.txt ./
 
-RUN pip installl --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./src ./src
 
-CMD ["streamlit", "run", "src/main.py"]
+CMD ["streamlit", "run", "code/src/app.py"]
