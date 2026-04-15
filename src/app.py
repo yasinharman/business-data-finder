@@ -106,51 +106,52 @@ with st.container(border=True):
     prompt = st.chat_input("Mesajınızı yazın...")
 
 if prompt:
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    st.session_state.download_data = None
+    with st.spinner("Wait for it...", show_time=True):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.session_state.download_data = None
 
-    if not N8N_WEBHOOK_URL:
-        reply = "⚠️ N8N_WEBHOOK_URL tanımlı değil. Lütfen .env dosyasına webhook adresini ekleyin."
-    else:
-        try:
-            response = requests.post(
-                N8N_WEBHOOK_URL,
-                json={"message": prompt, "history": st.session_state.messages},
-                timeout=120,
-            )
-            response.raise_for_status()
-            content_type = response.headers.get("Content-Type", "")
-            content_disposition = response.headers.get("Content-Disposition", "")
+        if not N8N_WEBHOOK_URL:
+            reply = "⚠️ N8N_WEBHOOK_URL tanımlı değil. Lütfen .env dosyasına webhook adresini ekleyin."
+        else:
+            try:
+                response = requests.post(
+                    N8N_WEBHOOK_URL,
+                    json={"message": prompt, "history": st.session_state.messages},
+                    timeout=120,
+                )
+                response.raise_for_status()
+                content_type = response.headers.get("Content-Type", "")
+                content_disposition = response.headers.get("Content-Disposition", "")
 
-            if is_file_response(content_type, content_disposition):
-                filename = parse_filename(content_disposition)
-                st.session_state.download_data = {
-                    "content": response.content,
-                    "filename": filename,
-                    "mime": content_type or "application/octet-stream",
-                }
-                reply = f"✅ XLSX dosyası hazır. Aşağıdaki butonla indir: {filename}"
-            else:
-                try:
-                    data = response.json()
-                    if isinstance(data, dict):
-                        reply = data.get("reply") or data.get("output") or data.get("message") or str(data)
-                    elif isinstance(data, list) and data:
-                        first = data[0]
-                        if isinstance(first, dict):
-                            reply = first.get("reply") or first.get("output") or first.get("message") or str(first)
+                if is_file_response(content_type, content_disposition):
+                    filename = parse_filename(content_disposition)
+                    st.session_state.download_data = {
+                        "content": response.content,
+                        "filename": filename,
+                        "mime": content_type or "application/octet-stream",
+                    }
+                    reply = f"✅ XLSX dosyası hazır. Aşağıdaki butonla indir: {filename}"
+                else:
+                    try:
+                        data = response.json()
+                        if isinstance(data, dict):
+                            reply = data.get("reply") or data.get("output") or data.get("message") or str(data)
+                        elif isinstance(data, list) and data:
+                            first = data[0]
+                            if isinstance(first, dict):
+                                reply = first.get("reply") or first.get("output") or first.get("message") or str(first)
+                            else:
+                                reply = str(first)
                         else:
-                            reply = str(first)
-                    else:
-                        reply = str(data)
-                except ValueError:
-                    text = response.text.strip()
-                    reply = text or "✅ N8N isteği başarıyla işlendi."
-        except requests.RequestException as exc:
-            reply = f"❌ Webhook'a ulaşılamadı: {exc}"
+                            reply = str(data)
+                    except ValueError:
+                        text = response.text.strip()
+                        reply = text or "✅ N8N isteği başarıyla işlendi."
+            except requests.RequestException as exc:
+                reply = f"❌ Webhook'a ulaşılamadı: {exc}"
 
-    st.session_state.messages.append({"role": "assistant", "content": reply})
-    st.rerun()
+        st.session_state.messages.append({"role": "assistant", "content": reply})
+        st.rerun()
 
 if st.session_state.download_data:
     st.download_button(
