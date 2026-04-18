@@ -20,12 +20,12 @@ services:
       STREAMLIT_SERVER_HEADLESS: "true"
       STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"
 
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=dokploy-network
-      - traefik.http.routers.google-maps-n8n.rule=Host(`${APP_DOMAIN:?APP_DOMAIN is required}`)
-      - traefik.http.routers.google-maps-n8n.entrypoints=web
-      - traefik.http.services.google-maps-n8n.loadbalancer.server.port=8501
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.docker.network=dokploy-network
+    #   - traefik.http.routers.google-maps-n8n.rule=Host(`${APP_DOMAIN:?APP_DOMAIN is required}`)
+    #   - traefik.http.routers.google-maps-n8n.entrypoints=web
+    #   - traefik.http.services.google-maps-n8n.loadbalancer.server.port=8501
 
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=5)"]
