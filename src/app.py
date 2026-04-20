@@ -103,7 +103,7 @@ with st.container(border=True):
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-    prompt = st.chat_input("Mesajınızı yazın...")
+    prompt = st.chat_input("İşletme aradığınız bölgeyi ve işletme türünü yazın. Örneğin: 'Mersindeki otelleriin verilerini istiyorum'")
 
 if prompt:
     with st.spinner("Wait for it...", show_time=True):
@@ -146,7 +146,7 @@ if prompt:
                             reply = str(data)
                     except ValueError:
                         text = response.text.strip()
-                        reply = text or "✅ N8N isteği başarıyla işlendi."
+                        reply = text or "Üzgünüm bu soruyu yanıtlayamam. Sadece işletme verileri çekmek üzere eğitildim."
             except requests.RequestException as exc:
                 reply = f"❌ Webhook'a ulaşılamadı: {exc}"
 
