@@ -103,7 +103,7 @@ with st.container(border=True):
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-    prompt = st.chat_input("İşletme aradığınız bölgeyi ve işletme türünü yazın. Örneğin: 'Mersindeki otelleriin verilerini istiyorum'")
+    prompt = st.chat_input("İşletme aradığınız bölgeyi ve işletme türünü yazın. Örneğin: 'Mersindeki otellerin verilerini istiyorum'")
 
 if prompt:
     with st.spinner("Wait for it...", show_time=True):
